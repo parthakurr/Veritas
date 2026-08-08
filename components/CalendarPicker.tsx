@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle2, Flame, Dumbbell } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useWorkout } from '@/context/WorkoutContext';
 
 export const CalendarPicker: React.FC = () => {
@@ -33,8 +33,8 @@ export const CalendarPicker: React.FC = () => {
   const isToday = selectedDate === new Date().toISOString().split('T')[0];
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 my-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/40 dark:shadow-none space-y-3 transition-colors">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 my-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-3.5 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/40 dark:shadow-none space-y-3 transition-colors">
         {/* Top Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -61,7 +61,7 @@ export const CalendarPicker: React.FC = () => {
           <div className="flex items-center space-x-1 font-mono text-xs">
             <button
               onClick={() => handleDateChange(-7)}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
               title="Previous Week"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -69,14 +69,14 @@ export const CalendarPicker: React.FC = () => {
 
             <button
               onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-              className="px-3 py-1.5 rounded-xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700 text-xs"
+              className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700 text-xs"
             >
               Today
             </button>
 
             <button
               onClick={() => handleDateChange(7)}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
               title="Next Week"
             >
               <ChevronRight className="w-4 h-4" />
@@ -84,8 +84,8 @@ export const CalendarPicker: React.FC = () => {
           </div>
         </div>
 
-        {/* 7-Day Interactive Visual Day Strip */}
-        <div className="grid grid-cols-7 gap-1.5 font-mono">
+        {/* 7-Day Interactive Visual Day Strip with Mobile Horizontal Scroll */}
+        <div className="flex sm:grid sm:grid-cols-7 gap-1.5 font-mono overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {daysStrip.map((day) => {
             const isSelected = day.iso === selectedDate;
             const hasWorkout = (workoutLogs[day.iso] || []).length > 0;
@@ -95,17 +95,17 @@ export const CalendarPicker: React.FC = () => {
               <button
                 key={day.iso}
                 onClick={() => setSelectedDate(day.iso)}
-                className={`p-2.5 rounded-2xl flex flex-col items-center justify-between transition-all border text-center relative ${
+                className={`min-w-[48px] sm:min-w-0 flex-1 p-2 sm:p-2.5 rounded-2xl flex flex-col items-center justify-between transition-all border text-center relative ${
                   isSelected
                     ? 'bg-[#E03E2D] text-white border-[#E03E2D] shadow-md shadow-rose-500/20 scale-[1.02]'
                     : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                <span className="text-[10px] font-sans font-bold uppercase opacity-70 block">
+                <span className="text-[9px] font-sans font-bold uppercase opacity-80 block">
                   {day.dayName}
                 </span>
 
-                <span className="text-sm font-extrabold my-1">{day.dayNum}</span>
+                <span className="text-xs sm:text-sm font-extrabold my-1">{day.dayNum}</span>
 
                 {/* Badges Row */}
                 <div className="flex items-center space-x-1 mt-0.5">

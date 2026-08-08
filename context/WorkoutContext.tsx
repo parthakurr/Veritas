@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { WorkoutSplit, WorkoutLog, ManualMacroLog, MacroGoals } from '@/types/workout';
+import { useAuth } from '@/context/AuthContext';
 
 interface WorkoutContextType {
   selectedDate: string; // YYYY-MM-DD
@@ -102,6 +103,7 @@ const SAMPLE_MACRO_LOGS: Record<string, ManualMacroLog> = {
 };
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string>(getTodayIsoString());
   const [splits, setSplits] = useState<WorkoutSplit[]>(DEFAULT_SPLITS);
   const [workoutLogs, setWorkoutLogs] = useState<Record<string, WorkoutLog[]>>(SAMPLE_HISTORICAL_LOGS);
@@ -110,39 +112,67 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [macroGoals, setMacroGoalsState] = useState<MacroGoals>({ calories: 2400, protein: 170, carbs: 250, fat: 65 });
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from LocalStorage
+  // Restore LocalStorage & Trigger Backend Cloud Sync
   useEffect(() => {
+    const userId = user?.id || 'guest';
     try {
-      const savedSplits = localStorage.getItem('veritas_splits_v3');
+      const savedSplits = localStorage.getItem(`veritas_splits_${userId}`);
       if (savedSplits) setSplits(JSON.parse(savedSplits));
 
-      const savedWorkoutLogs = localStorage.getItem('veritas_workout_logs_v3');
+      const savedWorkoutLogs = localStorage.getItem(`veritas_workout_logs_${userId}`);
       if (savedWorkoutLogs) setWorkoutLogs(JSON.parse(savedWorkoutLogs));
 
-      const savedMacroLogs = localStorage.getItem('veritas_macro_logs_v3');
+      const savedMacroLogs = localStorage.getItem(`veritas_macro_logs_${userId}`);
       if (savedMacroLogs) setMacroLogs(JSON.parse(savedMacroLogs));
 
-      const savedMacroGoals = localStorage.getItem('veritas_macro_goals_v3');
+      const savedMacroGoals = localStorage.getItem(`veritas_macro_goals_${userId}`);
       if (savedMacroGoals) setMacroGoalsState(JSON.parse(savedMacroGoals));
+
+      // Fetch from Backend Cloud API
+      fetch(`/api/user/sync?userId=${userId}`)
+        .then((res) => res.json())
+        .then((resData) => {
+          if (resData.success && resData.data) {
+            if (resData.data.splits && resData.data.splits.length > 0) setSplits(resData.data.splits);
+            if (resData.data.workoutLogs) setWorkoutLogs(resData.data.workoutLogs);
+            if (resData.data.macroLogs) setMacroLogs(resData.data.macroLogs);
+            if (resData.data.macroGoals) setMacroGoalsState(resData.data.macroGoals);
+          }
+        })
+        .catch((err) => console.warn('Cloud sync load fallback', err));
     } catch (e) {
       console.warn('LocalStorage restore error', e);
     } finally {
       setIsLoaded(true);
     }
-  }, []);
+  }, [user?.id]);
 
-  // Sync to LocalStorage
+  // Sync to LocalStorage & Backend Serverless API
   useEffect(() => {
     if (!isLoaded) return;
+    const userId = user?.id || 'guest';
     try {
-      localStorage.setItem('veritas_splits_v3', JSON.stringify(splits));
-      localStorage.setItem('veritas_workout_logs_v3', JSON.stringify(workoutLogs));
-      localStorage.setItem('veritas_macro_logs_v3', JSON.stringify(macroLogs));
-      localStorage.setItem('veritas_macro_goals_v3', JSON.stringify(macroGoals));
+      localStorage.setItem(`veritas_splits_${userId}`, JSON.stringify(splits));
+      localStorage.setItem(`veritas_workout_logs_${userId}`, JSON.stringify(workoutLogs));
+      localStorage.setItem(`veritas_macro_logs_${userId}`, JSON.stringify(macroLogs));
+      localStorage.setItem(`veritas_macro_goals_${userId}`, JSON.stringify(macroGoals));
+
+      // Cloud POST Sync
+      fetch('/api/user/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          splits,
+          workoutLogs,
+          macroLogs,
+          macroGoals,
+        }),
+      }).catch(() => {});
     } catch (e) {
       console.warn('LocalStorage save error', e);
     }
-  }, [splits, workoutLogs, macroLogs, macroGoals, isLoaded]);
+  }, [splits, workoutLogs, macroLogs, macroGoals, isLoaded, user?.id]);
 
   const addSplit = (name: string, exercises: string[], color = '#E03E2D') => {
     const newSplit: WorkoutSplit = {

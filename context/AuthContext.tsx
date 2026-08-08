@@ -1,155 +1,163 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, DateMealLogs } from '@/types/user';
+import { UserProfile } from '@/types/user';
 import { MealLog, MacroGoals } from '@/types/nutrition';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  selectedDate: string; // YYYY-MM-DD
-  setSelectedDate: (date: string) => void;
-  dateMealLogs: DateMealLogs;
-  currentDayMeals: MealLog[];
-  loginWithGoogle: () => void;
-  logout: () => void;
-  updateUserProfile: (profile: Partial<UserProfile>) => void;
-  addMealLog: (meal: MealLog, targetDate?: string) => void;
-  updateMealLog: (updatedMeal: MealLog, targetDate?: string) => void;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
+  updateUserProfile: (data: Partial<UserProfile>) => void;
+  updateMacroGoals: (goals: MacroGoals) => void;
+  dateMealLogs: Record<string, MealLog[]>;
+  saveMealLog: (meal: MealLog) => void;
   deleteMealLog: (mealId: string, targetDate?: string) => void;
-  resetCurrentDayLogs: (targetDate?: string) => void;
+  updateMealLog: (meal: MealLog) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function getTodayIsoString(): string {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
-}
-
 const DEFAULT_USER: UserProfile = {
-  id: 'usr_guest',
-  name: 'Alex Mercer',
-  email: 'alex.mercer@gmail.com',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  id: 'usr_demo_1',
+  name: 'Alex Johnson',
+  email: 'alex@veritas.ai',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
   gender: 'male',
   age: 26,
   heightCm: 178,
-  weightKg: 74,
+  weightKg: 76,
+  goal: 'muscle_gain',
   activityLevel: 'moderate',
-  goal: 'fat_loss',
   tdee: 2450,
-  macroGoals: { calories: 2150, protein: 150, carbs: 210, fat: 60 },
+  macroGoals: {
+    calories: 2400,
+    protein: 170,
+    carbs: 250,
+    fat: 65,
+  },
   isOnboarded: true,
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayIsoString());
-  const [dateMealLogs, setDateMealLogs] = useState<DateMealLogs>({});
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(DEFAULT_USER);
+  const [dateMealLogs, setDateMealLogs] = useState<Record<string, MealLog[]>>({});
 
-  // Load from LocalStorage on mount
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('veritas_user_v2');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const authUser: UserProfile = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'Veritas Lifter',
+          email: firebaseUser.email || 'user@veritas.ai',
+          avatar: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+          gender: 'male',
+          age: 25,
+          heightCm: 175,
+          weightKg: 75,
+          goal: 'muscle_gain',
+          activityLevel: 'moderate',
+          tdee: 2400,
+          macroGoals: {
+            calories: 2400,
+            protein: 170,
+            carbs: 250,
+            fat: 65,
+          },
+          isOnboarded: true,
+        };
+        setUser(authUser);
       }
-      const savedLogs = localStorage.getItem('veritas_date_logs_v2');
-      if (savedLogs) {
-        setDateMealLogs(JSON.parse(savedLogs));
-      } else {
-        // Initial sample data for today
-        const todayKey = getTodayIsoString();
-        setDateMealLogs({
-          [todayKey]: [
-            {
-              id: 'meal_sample_1',
-              timestamp: '8:30 AM',
-              prompt: '2 poached eggs with sourdough toast and half an avocado',
-              mealType: 'breakfast',
-              items: [
-                { id: 'i1', name: 'Poached Eggs', servingSize: '2 large', calories: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
-                { id: 'i2', name: 'Sourdough Toast', servingSize: '2 slices (70g)', calories: 186, protein: 7.0, carbs: 36.0, fat: 1.2 },
-                { id: 'i3', name: 'Avocado', servingSize: '0.5 medium', calories: 120, protein: 1.5, carbs: 6.0, fat: 11.0 },
-              ],
-              totals: { calories: 450, protein: 21.1, carbs: 42.8, fat: 21.8 },
-            },
-          ],
-        });
-      }
-    } catch (e) {
-      console.warn('LocalStorage error', e);
-    } finally {
-      setIsLoaded(true);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // Sync LocalStorage
-  useEffect(() => {
-    if (!isLoaded) return;
+  const loginWithGoogle = async () => {
     try {
-      if (user) localStorage.setItem('veritas_user_v2', JSON.stringify(user));
-      else localStorage.removeItem('veritas_user_v2');
-      localStorage.setItem('veritas_date_logs_v2', JSON.stringify(dateMealLogs));
-    } catch (e) {
-      console.warn('LocalStorage save error', e);
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        const loggedUser: UserProfile = {
+          id: result.user.uid,
+          name: result.user.displayName || 'Veritas Lifter',
+          email: result.user.email || 'user@veritas.ai',
+          avatar: result.user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+          gender: 'male',
+          age: 25,
+          heightCm: 175,
+          weightKg: 75,
+          goal: 'muscle_gain',
+          activityLevel: 'moderate',
+          tdee: 2400,
+          macroGoals: {
+            calories: 2400,
+            protein: 170,
+            carbs: 250,
+            fat: 65,
+          },
+          isOnboarded: true,
+        };
+        setUser(loggedUser);
+      }
+    } catch (error) {
+      console.warn('Google Popup Auth fallback', error);
+      setUser(DEFAULT_USER);
     }
-  }, [user, dateMealLogs, isLoaded]);
-
-  const loginWithGoogle = () => {
-    setUser(DEFAULT_USER);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (e) {
+      // ignore
+    }
     setUser(null);
   };
 
-  const updateUserProfile = (profile: Partial<UserProfile>) => {
-    setUser((prev) => {
-      if (!prev) return null;
-      return { ...prev, ...profile };
+  const updateUserProfile = (data: Partial<UserProfile>) => {
+    if (!user) return;
+    setUser({ ...user, ...data });
+  };
+
+  const updateMacroGoals = (goals: MacroGoals) => {
+    if (!user) return;
+    setUser({
+      ...user,
+      macroGoals: goals,
     });
   };
 
-  const currentDayMeals = dateMealLogs[selectedDate] || [];
-
-  const addMealLog = (meal: MealLog, targetDate: string = selectedDate) => {
-    setDateMealLogs((prev) => {
-      const existing = prev[targetDate] || [];
-      return {
-        ...prev,
-        [targetDate]: [meal, ...existing],
-      };
-    });
-  };
-
-  const updateMealLog = (updatedMeal: MealLog, targetDate: string = selectedDate) => {
-    setDateMealLogs((prev) => {
-      const existing = prev[targetDate] || [];
-      return {
-        ...prev,
-        [targetDate]: existing.map((m) => (m.id === updatedMeal.id ? updatedMeal : m)),
-      };
-    });
-  };
-
-  const deleteMealLog = (mealId: string, targetDate: string = selectedDate) => {
-    setDateMealLogs((prev) => {
-      const existing = prev[targetDate] || [];
-      return {
-        ...prev,
-        [targetDate]: existing.filter((m) => m.id !== mealId),
-      };
-    });
-  };
-
-  const resetCurrentDayLogs = (targetDate: string = selectedDate) => {
+  const saveMealLog = (meal: MealLog) => {
+    const dateKey = meal.timestamp.split('T')[0] || new Date().toISOString().split('T')[0];
     setDateMealLogs((prev) => ({
       ...prev,
-      [targetDate]: [],
+      [dateKey]: [meal, ...(prev[dateKey] || [])],
     }));
+  };
+
+  const deleteMealLog = (mealId: string, targetDate?: string) => {
+    setDateMealLogs((prev) => {
+      const dateKey = targetDate || Object.keys(prev).find((d) => prev[d].some((m) => m.id === mealId));
+      if (!dateKey) return prev;
+      return {
+        ...prev,
+        [dateKey]: prev[dateKey].filter((m) => m.id !== mealId),
+      };
+    });
+  };
+
+  const updateMealLog = (updatedMeal: MealLog) => {
+    const dateKey = updatedMeal.timestamp.split('T')[0] || new Date().toISOString().split('T')[0];
+    setDateMealLogs((prev) => {
+      const existing = prev[dateKey] || [];
+      return {
+        ...prev,
+        [dateKey]: existing.map((m) => (m.id === updatedMeal.id ? updatedMeal : m)),
+      };
+    });
   };
 
   return (
@@ -157,17 +165,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAuthenticated: !!user,
-        selectedDate,
-        setSelectedDate,
-        dateMealLogs,
-        currentDayMeals,
         loginWithGoogle,
         logout,
         updateUserProfile,
-        addMealLog,
-        updateMealLog,
+        updateMacroGoals,
+        dateMealLogs,
+        saveMealLog,
         deleteMealLog,
-        resetCurrentDayLogs,
+        updateMealLog,
       }}
     >
       {children}
