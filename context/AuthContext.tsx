@@ -10,6 +10,7 @@ interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   loginWithGoogle: () => Promise<void>;
+  setUserDirect: (profile: UserProfile) => void;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => void;
   updateMacroGoals: (goals: MacroGoals) => void;
@@ -47,6 +48,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dateMealLogs, setDateMealLogs] = useState<Record<string, MealLog[]>>({});
 
   useEffect(() => {
+    // Restore saved Google user from localStorage
+    try {
+      const savedUser = localStorage.getItem('veritas_auth_user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (e) {
+      console.warn('Saved user restore error', e);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         const authUser: UserProfile = {
@@ -70,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isOnboarded: true,
         };
         setUser(authUser);
+        localStorage.setItem('veritas_auth_user', JSON.stringify(authUser));
       }
     });
 
@@ -101,33 +113,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isOnboarded: true,
         };
         setUser(loggedUser);
+        localStorage.setItem('veritas_auth_user', JSON.stringify(loggedUser));
       }
     } catch (error) {
       console.warn('Google Popup Auth fallback', error);
-      setUser(DEFAULT_USER);
     }
+  };
+
+  const setUserDirect = (profile: UserProfile) => {
+    setUser(profile);
+    try {
+      localStorage.setItem('veritas_auth_user', JSON.stringify(profile));
+    } catch (e) {}
   };
 
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
+    localStorage.removeItem('veritas_auth_user');
     setUser(null);
   };
 
   const updateUserProfile = (data: Partial<UserProfile>) => {
     if (!user) return;
-    setUser({ ...user, ...data });
+    const updated = { ...user, ...data };
+    setUser(updated);
+    localStorage.setItem('veritas_auth_user', JSON.stringify(updated));
   };
 
   const updateMacroGoals = (goals: MacroGoals) => {
     if (!user) return;
-    setUser({
+    const updated = {
       ...user,
       macroGoals: goals,
-    });
+    };
+    setUser(updated);
+    localStorage.setItem('veritas_auth_user', JSON.stringify(updated));
   };
 
   const saveMealLog = (meal: MealLog) => {
@@ -166,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isAuthenticated: !!user,
         loginWithGoogle,
+        setUserDirect,
         logout,
         updateUserProfile,
         updateMacroGoals,
