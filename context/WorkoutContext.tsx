@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { WorkoutSplit, WorkoutLog, ManualMacroLog, MacroGoals } from '@/types/workout';
+import { WorkoutSplit, WorkoutLog, ManualMacroLog, MacroGoals, MuscleGroup, MuscleProgression } from '@/types/workout';
 import { useAuth } from '@/context/AuthContext';
 
 interface WorkoutContextType {
@@ -22,6 +22,8 @@ interface WorkoutContextType {
   saveManualMacroLog: (log: ManualMacroLog) => void;
   setMacroGoals: (goals: MacroGoals) => void;
   getExerciseHistory: (exerciseName: string) => Array<{ date: string; maxWeight: number; totalVolume: number; setsCount: number }>;
+  getMuscleProgression: (muscleGroup: MuscleGroup) => MuscleProgression;
+  getAllMusclesProgression: () => Record<MuscleGroup, MuscleProgression>;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -102,6 +104,18 @@ const SAMPLE_MACRO_LOGS: Record<string, ManualMacroLog> = {
   },
 };
 
+const MUSCLE_MAP: Record<MuscleGroup, { displayName: string; keywords: string[] }> = {
+  chest: { displayName: 'Chest (Pectorals)', keywords: ['bench', 'incline', 'chest', 'fly', 'pushup', 'dip', 'pectoral'] },
+  back: { displayName: 'Back (Lats & Traps)', keywords: ['deadlift', 'lat', 'pulldown', 'row', 'chinup', 'pullup', 'back', 'face pull'] },
+  shoulders: { displayName: 'Shoulders (Deltoids)', keywords: ['overhead', 'press', 'shoulder', 'lateral raise', 'military', 'delt'] },
+  biceps: { displayName: 'Biceps', keywords: ['biceps', 'curl', 'preacher', 'hammer'] },
+  triceps: { displayName: 'Triceps', keywords: ['triceps', 'skullcrusher', 'pushdown', 'dip', 'extension'] },
+  quads: { displayName: 'Quads (Quadriceps)', keywords: ['squat', 'leg press', 'leg extension', 'lunge', 'quad'] },
+  hamstrings: { displayName: 'Hamstrings & Glutes', keywords: ['romanian', 'hamstring', 'curl', 'glute', 'stiff'] },
+  calves: { displayName: 'Calves', keywords: ['calf', 'calves', 'raise'] },
+  abs: { displayName: 'Core (Abs)', keywords: ['crunch', 'abs', 'ab', 'plank', 'hanging leg'] },
+};
+
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string>(getTodayIsoString());
@@ -112,7 +126,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [macroGoals, setMacroGoalsState] = useState<MacroGoals>({ calories: 2400, protein: 170, carbs: 250, fat: 65 });
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Restore LocalStorage & Trigger Backend Cloud Sync
   useEffect(() => {
     const userId = user?.id || 'guest';
     try {
@@ -128,7 +141,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const savedMacroGoals = localStorage.getItem(`veritas_macro_goals_${userId}`);
       if (savedMacroGoals) setMacroGoalsState(JSON.parse(savedMacroGoals));
 
-      // Fetch from Backend Cloud API
       fetch(`/api/user/sync?userId=${userId}`)
         .then((res) => res.json())
         .then((resData) => {
@@ -139,7 +151,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (resData.data.macroGoals) setMacroGoalsState(resData.data.macroGoals);
           }
         })
-        .catch((err) => console.warn('Cloud sync load fallback', err));
+        .catch(() => {});
     } catch (e) {
       console.warn('LocalStorage restore error', e);
     } finally {
@@ -147,7 +159,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [user?.id]);
 
-  // Sync to LocalStorage & Backend Serverless API
   useEffect(() => {
     if (!isLoaded) return;
     const userId = user?.id || 'guest';
@@ -157,7 +168,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem(`veritas_macro_logs_${userId}`, JSON.stringify(macroLogs));
       localStorage.setItem(`veritas_macro_goals_${userId}`, JSON.stringify(macroGoals));
 
-      // Cloud POST Sync
       fetch('/api/user/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,9 +179,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           macroGoals,
         }),
       }).catch(() => {});
-    } catch (e) {
-      console.warn('LocalStorage save error', e);
-    }
+    } catch (e) {}
   }, [splits, workoutLogs, macroLogs, macroGoals, isLoaded, user?.id]);
 
   const addSplit = (name: string, exercises: string[], color = '#E03E2D') => {
@@ -267,6 +275,94 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .sort((a, b) => a.date.localeCompare(b.date));
   };
 
+  const getMuscleProgression = (muscleGroup: MuscleGroup): MuscleProgression => {
+    const config = MUSCLE_MAP[muscleGroup];
+    let totalVolumeKg = 0;
+    let maxWeightKg = 0;
+    let totalSets = 0;
+    let lastTrainedDate: string | undefined = undefined;
+
+    Object.entries(workoutLogs).forEach(([dateKey, logs]) => {
+      logs.forEach((log) => {
+        log.exercises.forEach((exSession) => {
+          const exName = exSession.exerciseName.toLowerCase();
+          const matches = config.keywords.some((kw) => exName.includes(kw));
+
+          if (matches) {
+            if (!lastTrainedDate || dateKey > lastTrainedDate) {
+              lastTrainedDate = dateKey;
+            }
+
+            exSession.sets.forEach((set) => {
+              totalSets += 1;
+              const setVol = set.weightKg * set.reps;
+              totalVolumeKg += setVol;
+              if (set.weightKg > maxWeightKg) maxWeightKg = set.weightKg;
+            });
+          }
+        });
+      });
+    });
+
+    // Level thresholds
+    const levelThresholds = [0, 500, 1500, 3000, 6000, 10000, 15000, 22000, 30000, 45000];
+    let level = 1;
+    let levelTitle = 'Lvl 1 • Novice';
+
+    for (let i = levelThresholds.length - 1; i >= 0; i--) {
+      if (totalVolumeKg >= levelThresholds[i]) {
+        level = i + 1;
+        break;
+      }
+    }
+
+    if (level === 1) levelTitle = 'Lvl 1 • Novice';
+    else if (level <= 3) levelTitle = `Lvl ${level} • Hypertrophy I`;
+    else if (level <= 6) levelTitle = `Lvl ${level} • Hypertrophy II`;
+    else if (level <= 9) levelTitle = `Lvl ${level} • Elite Sculpt`;
+    else levelTitle = `Lvl 10 • Titan Muscle`;
+
+    const currentCap = levelThresholds[Math.min(level, levelThresholds.length - 1)];
+    const prevCap = levelThresholds[Math.max(0, level - 1)];
+    const progressToNextLevel = level >= 10 ? 100 : Math.min(100, Math.round(((totalVolumeKg - prevCap) / (currentCap - prevCap || 1)) * 100));
+
+    // Recovery status
+    let recoveryState: 'recovered' | 'primed' | 'fatigued' = 'recovered';
+    if (lastTrainedDate) {
+      const today = new Date();
+      const trained = new Date(lastTrainedDate);
+      const diffHours = (today.getTime() - trained.getTime()) / (1000 * 3600);
+
+      if (diffHours <= 24) recoveryState = 'fatigued';
+      else if (diffHours <= 48) recoveryState = 'primed';
+      else recoveryState = 'recovered';
+    }
+
+    return {
+      muscleGroup,
+      displayName: config.displayName,
+      totalVolumeKg,
+      maxWeightKg,
+      totalSets,
+      level,
+      levelTitle,
+      progressToNextLevel,
+      recoveryState,
+      lastTrainedDate,
+    };
+  };
+
+  const getAllMusclesProgression = (): Record<MuscleGroup, MuscleProgression> => {
+    const keys: MuscleGroup[] = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'calves', 'abs'];
+    const result: Partial<Record<MuscleGroup, MuscleProgression>> = {};
+
+    keys.forEach((key) => {
+      result[key] = getMuscleProgression(key);
+    });
+
+    return result as Record<MuscleGroup, MuscleProgression>;
+  };
+
   return (
     <WorkoutContext.Provider
       value={{
@@ -287,6 +383,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         saveManualMacroLog,
         setMacroGoals,
         getExerciseHistory,
+        getMuscleProgression,
+        getAllMusclesProgression,
       }}
     >
       {children}

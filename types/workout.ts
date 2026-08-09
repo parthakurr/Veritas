@@ -43,3 +43,27 @@ export interface MacroGoals {
   carbs: number;
   fat: number;
 }
+
+export type MuscleGroup =
+  | 'chest'
+  | 'back'
+  | 'shoulders'
+  | 'biceps'
+  | 'triceps'
+  | 'quads'
+  | 'hamstrings'
+  | 'calves'
+  | 'abs';
+
+export interface MuscleProgression {
+  muscleGroup: MuscleGroup;
+  displayName: string;
+  totalVolumeKg: number;
+  maxWeightKg: number;
+  totalSets: number;
+  level: number; // 1 to 10
+  levelTitle: string; // e.g. Novice, Hypertrophy, Titan
+  progressToNextLevel: number; // 0-100%
+  recoveryState: 'recovered' | 'primed' | 'fatigued';
+  lastTrainedDate?: string;
+}
