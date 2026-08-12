@@ -3,7 +3,7 @@
 import React from 'react';
 import { Navbar } from '@/components/Navbar';
 import { CalendarPicker } from '@/components/CalendarPicker';
-import { AnatomyHUD } from '@/components/AnatomyHUD';
+import { Anatomy360HUD } from '@/components/Anatomy360HUD';
 import { WorkoutLogger } from '@/components/WorkoutLogger';
 import { ExerciseChart } from '@/components/ExerciseChart';
 import { ManualMacroLogger } from '@/components/ManualMacroLogger';
@@ -12,16 +12,16 @@ import { WorkoutProvider } from '@/context/WorkoutContext';
 export default function DashboardPage() {
   return (
     <WorkoutProvider>
-      <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#090D16] text-slate-900 dark:text-white bg-ambient-glow flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-16 transition-colors">
+      <div className="min-h-screen bg-[#020914] text-white flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950 pb-16 transition-colors">
         <Navbar />
 
         {/* Calendar Date Switcher */}
         <CalendarPicker />
 
         <main className="w-full max-w-6xl mx-auto px-3 sm:px-6 space-y-8 flex-1">
-          {/* Section 1: Tesla Cockpit Anatomical Body & Muscle Growth HUD */}
+          {/* Section 1: Dedicated 360° Holographic Electric Blue Anatomy HUD */}
           <section>
-            <AnatomyHUD />
+            <Anatomy360HUD />
           </section>
 
           {/* Section 2: Exercise Strength Progression Graph (Day vs Weight) */}
