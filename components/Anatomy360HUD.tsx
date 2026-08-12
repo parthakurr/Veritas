@@ -19,12 +19,11 @@ export const Anatomy360HUD: React.FC = () => {
   useEffect(() => {
     if (!isAutoRotate) return;
     const interval = setInterval(() => {
-      setRotationAngle((prev) => (prev + 1.5) % 360);
+      setRotationAngle((prev) => (prev + 1) % 360);
     }, 50);
     return () => clearInterval(interval);
   }, [isAutoRotate]);
 
-  // Determine front vs back view based on 360 degree angle
   const isBackView = rotationAngle > 90 && rotationAngle < 270;
 
   const handleMuscleClick = (mg: MuscleGroup) => {
@@ -32,7 +31,7 @@ export const Anatomy360HUD: React.FC = () => {
     setIsQuickLogOpen(true);
   };
 
-  // Callout definition matching reference image
+  // Laser Pointer Callouts (Matching Reference Images 1 & 2)
   const calloutTargets: Array<{
     group: MuscleGroup;
     splitName: string;
@@ -44,41 +43,40 @@ export const Anatomy360HUD: React.FC = () => {
     calloutY: number;
     pointerSide: 'left' | 'right';
   }> = [
-    { group: 'chest', splitName: 'PUSH DAY / CHEST', label: 'PECTORALIS MAJOR', viewSide: 'front', cx: 200, cy: 155, calloutX: 50, calloutY: 130, pointerSide: 'left' },
-    { group: 'abs', splitName: 'CORE / ABS', label: 'RECTUS ABDOMINIS', viewSide: 'front', cx: 200, cy: 220, calloutX: 50, calloutY: 230, pointerSide: 'left' },
-    { group: 'quads', splitName: 'LEGS DAY / QUADS', label: 'QUADRICEPS FEMORIS', viewSide: 'front', cx: 175, cy: 330, calloutX: 50, calloutY: 350, pointerSide: 'left' },
-    { group: 'shoulders', splitName: 'PUSH DAY / SHOULDERS', label: 'DELTOIDS', viewSide: 'front', cx: 140, cy: 125, calloutX: 350, calloutY: 100, pointerSide: 'right' },
-    { group: 'biceps', splitName: 'PULL DAY / BICEPS', label: 'BICEPS BRACHII', viewSide: 'front', cx: 130, cy: 185, calloutX: 350, calloutY: 180, pointerSide: 'right' },
+    { group: 'chest', splitName: 'PUSH DAY / CHEST', label: 'PECTORALIS MAJOR', viewSide: 'front', cx: 200, cy: 148, calloutX: 45, calloutY: 130, pointerSide: 'left' },
+    { group: 'abs', splitName: 'CORE / ABS', label: 'RECTUS ABDOMINIS', viewSide: 'front', cx: 200, cy: 225, calloutX: 45, calloutY: 230, pointerSide: 'left' },
+    { group: 'quads', splitName: 'LEGS DAY / QUADS', label: 'QUADRICEPS FEMORIS', viewSide: 'front', cx: 165, cy: 335, calloutX: 45, calloutY: 340, pointerSide: 'left' },
+    { group: 'shoulders', splitName: 'PUSH DAY / SHOULDERS', label: 'DELTOIDS', viewSide: 'front', cx: 142, cy: 120, calloutX: 355, calloutY: 100, pointerSide: 'right' },
+    { group: 'biceps', splitName: 'PULL DAY / BICEPS', label: 'BICEPS BRACHII', viewSide: 'front', cx: 126, cy: 190, calloutX: 355, calloutY: 190, pointerSide: 'right' },
     
-    { group: 'back', splitName: 'PULL DAY / LATS & TRAPS', label: 'LATISSIMUS DORSI & TRAPEZIUS', viewSide: 'back', cx: 200, cy: 150, calloutX: 350, calloutY: 120, pointerSide: 'right' },
-    { group: 'triceps', splitName: 'PUSH DAY / TRICEPS', label: 'TRICEPS BRACHII', viewSide: 'back', cx: 272, cy: 175, calloutX: 350, calloutY: 200, pointerSide: 'right' },
-    { group: 'hamstrings', splitName: 'LEGS DAY / HAMSTRINGS', label: 'HAMSTRINGS & GLUTES', viewSide: 'back', cx: 220, cy: 330, calloutX: 50, calloutY: 320, pointerSide: 'left' },
-    { group: 'calves', splitName: 'LEGS DAY / CALVES', label: 'GASTROCNEMIUS', viewSide: 'back', cx: 225, cy: 430, calloutX: 50, calloutY: 420, pointerSide: 'left' },
+    { group: 'back', splitName: 'PULL DAY / LATS & TRAPS', label: 'TRAPEZIUS & LATISSIMUS', viewSide: 'back', cx: 200, cy: 140, calloutX: 355, calloutY: 120, pointerSide: 'right' },
+    { group: 'triceps', splitName: 'PUSH DAY / TRICEPS', label: 'TRICEPS BRACHII', viewSide: 'back', cx: 274, cy: 180, calloutX: 355, calloutY: 200, pointerSide: 'right' },
+    { group: 'hamstrings', splitName: 'LEGS DAY / HAMSTRINGS', label: 'HAMSTRINGS & GLUTES', viewSide: 'back', cx: 220, cy: 330, calloutX: 45, calloutY: 320, pointerSide: 'left' },
+    { group: 'calves', splitName: 'LEGS DAY / CALVES', label: 'GASTROCNEMIUS', viewSide: 'back', cx: 225, cy: 425, calloutX: 45, calloutY: 410, pointerSide: 'left' },
   ];
 
   const currentCalls = calloutTargets.filter((c) => (isBackView ? c.viewSide === 'back' : c.viewSide === 'front'));
 
   return (
-    <div className="bg-[#020914] text-white rounded-3xl p-4 sm:p-8 border border-cyan-500/30 shadow-2xl relative overflow-hidden font-sans space-y-6">
-      {/* Background Holographic Grid Floor & Radial Lighting */}
-      <div className="absolute inset-0 bg-[radial-gradient(#00f0ff_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
-      <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-cyan-950/40 via-cyan-900/10 to-transparent pointer-events-none" />
+    <div className="bg-[#020914] text-white rounded-3xl p-4 sm:p-7 border border-cyan-500/40 shadow-[0_0_50px_rgba(0,240,255,0.15)] relative overflow-hidden font-sans space-y-6">
+      {/* Background Matrix Dot Grid Overlay (Exact Match to Image 1 & 2) */}
+      <div className="absolute inset-0 bg-[radial-gradient(#00f0ff_1.2px,transparent_1.2px)] [background-size:22px_22px] opacity-20 pointer-events-none" />
 
       {/* Top Sci-Fi Holographic HUD Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-cyan-500/20 pb-4 gap-3 relative z-10 font-mono">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-cyan-500/30 pb-4 gap-3 relative z-10 font-mono">
         <div className="flex items-center space-x-3">
           <div className="p-2.5 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/40 shadow-lg shadow-cyan-500/20">
-            <Zap className="w-5 h-5 animate-pulse" />
+            <Zap className="w-5 h-5 animate-pulse text-[#00f0ff]" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] uppercase font-extrabold text-cyan-400 tracking-widest">
-                VERITAS 360° HOLOGRAPHIC BLUE ANATOMY
+              <span className="text-[10px] uppercase font-extrabold text-[#00f0ff] tracking-widest">
+                VERITAS 360° NEON BLUE BLUEPRINT
               </span>
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-[#00f0ff] animate-ping" />
             </div>
             <h2 className="text-lg font-black tracking-tight text-white font-sans">
-              360° Interactive Muscle Blueprint
+              Interactive Holographic Muscle Map
             </h2>
           </div>
         </div>
@@ -87,27 +85,27 @@ export const Anatomy360HUD: React.FC = () => {
         <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end text-xs">
           <button
             onClick={() => setIsAutoRotate(!isAutoRotate)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 font-bold transition"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 font-bold transition shadow-md"
           >
             {isAutoRotate ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
             <span>{isAutoRotate ? 'Pause 360° Spin' : 'Auto 360° Spin'}</span>
           </button>
 
-          <span className="text-[11px] font-extrabold text-cyan-400 bg-cyan-950/80 px-3 py-1.5 rounded-xl border border-cyan-500/30">
+          <span className="text-[11px] font-extrabold text-[#00f0ff] bg-cyan-950/90 px-3 py-1.5 rounded-xl border border-cyan-500/40 font-mono">
             {Math.round(rotationAngle)}° {isBackView ? 'POSTERIOR' : 'ANTERIOR'}
           </span>
         </div>
       </div>
 
       {/* Main 360° Holographic Display Viewport */}
-      <div className="relative min-h-[500px] flex items-center justify-center py-4">
+      <div className="relative min-h-[520px] flex items-center justify-center py-4">
         
-        {/* Holographic Blue Ray Platform Base at Feet (Matching Reference Image) */}
-        <div className="absolute bottom-6 w-72 h-16 rounded-full border-2 border-cyan-400/60 bg-cyan-500/10 shadow-[0_0_50px_rgba(0,240,255,0.3)] transform rotate-x-60 flex items-center justify-center pointer-events-none">
-          <div className="w-56 h-12 rounded-full border border-cyan-300/40 animate-pulse" />
+        {/* Holographic Pedestal Oval Ring at Feet (Exact Match to Image 1 & 2) */}
+        <div className="absolute bottom-4 w-80 h-16 rounded-full border-2 border-[#00f0ff]/80 bg-cyan-500/10 shadow-[0_0_40px_rgba(0,240,255,0.4)] transform rotate-x-65 flex items-center justify-center pointer-events-none">
+          <div className="w-64 h-12 rounded-full border border-[#00f0ff]/40 animate-pulse" />
         </div>
 
-        {/* Callout Pointer Cards (Left & Right HUD Panels - Matching Reference Screenshot) */}
+        {/* Callout Pointer Cards Grid (Left & Right Panels) */}
         <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 items-center gap-4 relative z-20">
           
           {/* Left Callouts Stack */}
@@ -123,28 +121,28 @@ export const Anatomy360HUD: React.FC = () => {
                     onClick={() => handleMuscleClick(c.group)}
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-cyan-950/90 border-cyan-400 shadow-xl shadow-cyan-500/20 scale-[1.03]'
-                        : 'bg-slate-950/70 border-cyan-500/30 hover:border-cyan-400/60 hover:bg-cyan-950/40'
+                        ? 'bg-cyan-950/90 border-[#00f0ff] shadow-[0_0_20px_rgba(0,240,255,0.3)] scale-[1.03]'
+                        : 'bg-slate-950/80 border-cyan-500/30 hover:border-[#00f0ff]/70 hover:bg-cyan-950/50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-black text-cyan-400 tracking-wider block">
+                      <span className="text-[10px] font-mono font-black text-[#00f0ff] tracking-wider block">
                         {c.splitName}
                       </span>
-                      <Plus className="w-3.5 h-3.5 text-cyan-400" />
+                      <Plus className="w-3.5 h-3.5 text-[#00f0ff]" />
                     </div>
                     <h4 className="text-xs font-black text-white font-mono mt-0.5">{c.label}</h4>
                     <div className="text-[10px] font-mono text-slate-300 mt-1 flex items-center justify-between">
                       <span>Vol: {prog.totalVolumeKg.toLocaleString()} kg</span>
-                      <span className="text-cyan-400 font-extrabold">{prog.levelTitle.split('•')[0]}</span>
+                      <span className="text-[#00f0ff] font-extrabold">{prog.levelTitle.split('•')[0]}</span>
                     </div>
                   </div>
                 );
               })}
           </div>
 
-          {/* Center 360° Holographic Human Body Vector Schematic */}
-          <div className="md:col-span-6 flex justify-center relative py-4">
+          {/* Center 360° Neon Cyan Stylized Vector Blueprint Model (Exact Match to Image 1) */}
+          <div className="md:col-span-6 flex justify-center relative py-2">
             <div
               className="relative w-full max-w-[340px] aspect-[3/4] transition-transform duration-75"
               style={{
@@ -152,152 +150,210 @@ export const Anatomy360HUD: React.FC = () => {
                 transformStyle: 'preserve-3d',
               }}
             >
-              <svg viewBox="0 0 400 520" className="w-full h-full drop-shadow-[0_0_20px_rgba(0,240,255,0.4)]">
+              <svg viewBox="0 0 400 520" className="w-full h-full drop-shadow-[0_0_25px_rgba(0,240,255,0.5)]">
                 <defs>
-                  <filter id="cyanGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="6" result="blur" />
+                  <filter id="neonBlueGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
 
-                  <linearGradient id="holoBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#00f0ff" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#0077ff" stopOpacity="0.7" />
+                  <linearGradient id="neonFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00f0ff" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#0088ff" stopOpacity="0.15" />
                   </linearGradient>
                 </defs>
 
-                {/* Holographic Wireframe Muscles (Matching Reference Image) */}
-                <g fill="none" stroke="#00f0ff" strokeWidth="1.2" opacity="0.9" filter="url(#cyanGlow)">
-                  {/* Head & Skull Wireframe */}
-                  <path d="M 200 20 C 180 20 172 35 172 52 C 172 70 182 82 200 82 C 218 82 228 70 228 52 C 228 35 220 20 200 20 Z" strokeWidth="1.5" />
-                  <path d="M 185 45 Q 200 35 215 45" />
-                  <path d="M 185 60 Q 200 70 215 60" />
-                  <line x1="200" y1="20" x2="200" y2="82" strokeDasharray="2,2" />
-
-                  {/* Neck */}
-                  <path d="M 188 82 L 184 98 L 216 98 L 212 82 Z" />
+                {/* Stylized Neon Vector Body Outline & Muscles (Matching Image 1 EXACTLY) */}
+                <g stroke="#00f0ff" strokeWidth="1.8" fill="none" filter="url(#neonBlueGlow)">
+                  
+                  {/* Stylized Head: Circle + Center Vertical Dashed Line + Curved Eye Line + Neck Stand */}
+                  <g>
+                    <circle cx="200" cy="50" r="28" fill="rgba(0, 240, 255, 0.08)" stroke="#00f0ff" strokeWidth="2" />
+                    <line x1="200" y1="22" x2="200" y2="78" stroke="#00f0ff" strokeWidth="1.2" strokeDasharray="3,2" />
+                    <path d="M 182 52 Q 200 44 218 52" stroke="#00f0ff" strokeWidth="1.6" fill="none" />
+                    <path d="M 182 52 Q 200 60 218 52" stroke="#00f0ff" strokeWidth="1.6" fill="none" />
+                    {/* Neck Pedestal Stand */}
+                    <path d="M 186 78 L 182 96 L 218 96 L 214 78 Z" fill="rgba(0, 240, 255, 0.15)" stroke="#00f0ff" strokeWidth="1.8" />
+                  </g>
 
                   {!isBackView ? (
                     <>
-                      {/* Pectoralis Major (Chest Wireframe Bellies) */}
+                      {/* Sculpted Chest (Pectorals Dual Plates) */}
                       <path
-                        d="M 145 125 C 170 130 195 135 198 158 C 198 175 170 185 145 170 C 135 155 138 135 145 125 Z"
-                        fill={activeMuscle === 'chest' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        d="M 142 115 C 170 120 196 128 198 155 C 198 175 168 185 140 168 C 132 150 135 125 142 115 Z"
+                        fill={activeMuscle === 'chest' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.18)'}
                         stroke="#00f0ff"
-                        strokeWidth="1.8"
+                        strokeWidth="2.2"
                       />
                       <path
-                        d="M 255 125 C 230 130 205 135 202 158 C 202 175 230 185 255 170 C 265 155 262 135 255 125 Z"
-                        fill={activeMuscle === 'chest' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        d="M 258 115 C 230 120 204 128 202 155 C 202 175 232 185 260 168 C 268 150 265 125 258 115 Z"
+                        fill={activeMuscle === 'chest' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.18)'}
                         stroke="#00f0ff"
-                        strokeWidth="1.8"
+                        strokeWidth="2.2"
                       />
-                      <path d="M 155 140 Q 180 145 196 148" />
-                      <path d="M 245 140 Q 220 145 204 148" />
-                      <path d="M 150 155 Q 175 160 196 165" />
-                      <path d="M 250 155 Q 225 160 204 165" />
+                      <path d="M 152 135 Q 180 140 196 145" strokeWidth="1.2" />
+                      <path d="M 248 135 Q 220 140 204 145" strokeWidth="1.2" />
 
-                      {/* Deltoids (Shoulders Wireframe) */}
+                      {/* Deltoids (Teardrop Shoulder Caps) */}
                       <path
-                        d="M 124 110 C 132 104 146 112 144 135 C 140 148 128 142 122 130 Z"
-                        fill={activeMuscle === 'shoulders' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        d="M 124 104 C 134 98 148 108 144 132 C 138 145 126 140 120 126 Z"
+                        fill={activeMuscle === 'shoulders' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.18)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
-                        d="M 276 110 C 268 104 254 112 256 135 C 260 148 272 142 278 130 Z"
-                        fill={activeMuscle === 'shoulders' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        d="M 276 104 C 266 98 252 108 256 132 C 262 145 274 140 280 126 Z"
+                        fill={activeMuscle === 'shoulders' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.18)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
 
-                      {/* Rectus Abdominis (Six-Pack Core Wireframe) */}
-                      <g fill={activeMuscle === 'abs' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.15)'}>
-                        <rect x="180" y="190" width="18" height="18" rx="3" stroke="#00f0ff" />
-                        <rect x="202" y="190" width="18" height="18" rx="3" stroke="#00f0ff" />
-                        <rect x="180" y="212" width="18" height="18" rx="3" stroke="#00f0ff" />
-                        <rect x="202" y="212" width="18" height="18" rx="3" stroke="#00f0ff" />
-                        <rect x="182" y="234" width="16" height="20" rx="3" stroke="#00f0ff" />
-                        <rect x="202" y="234" width="16" height="20" rx="3" stroke="#00f0ff" />
+                      {/* Abdominals (6 Distinct Rounded Rectangles - Matching Image 1) */}
+                      <g fill={activeMuscle === 'abs' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.15)'} stroke="#00f0ff" strokeWidth="2">
+                        <rect x="176" y="195" width="20" height="18" rx="4" />
+                        <rect x="204" y="195" width="20" height="18" rx="4" />
+                        <rect x="176" y="217" width="20" height="18" rx="4" />
+                        <rect x="204" y="217" width="20" height="18" rx="4" />
+                        <rect x="178" y="239" width="18" height="20" rx="4" />
+                        <rect x="204" y="239" width="18" height="20" rx="4" />
                       </g>
 
-                      {/* Biceps Wireframe */}
+                      {/* Biceps & Forearms Outer Segments */}
                       <path
-                        d="M 120 142 C 114 155 110 185 120 200 C 126 195 132 170 130 150 Z"
-                        fill={activeMuscle === 'biceps' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        d="M 118 140 C 112 155 106 190 118 206 C 126 200 132 172 128 148 Z"
+                        fill={activeMuscle === 'biceps' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.15)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
-                        d="M 280 142 C 286 155 290 185 280 200 C 274 195 268 170 270 150 Z"
-                        fill={activeMuscle === 'biceps' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        d="M 282 140 C 288 155 294 190 282 206 C 274 200 268 172 272 148 Z"
+                        fill={activeMuscle === 'biceps' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.15)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
 
-                      {/* Quadriceps Femoris Wireframe */}
-                      <path
-                        d="M 155 295 C 145 320 142 370 162 390 C 172 385 185 340 188 300 Z"
-                        fill={activeMuscle === 'quads' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
-                        stroke="#00f0ff"
-                        strokeWidth="1.6"
-                      />
-                      <path
-                        d="M 245 295 C 255 320 258 370 238 390 C 228 385 215 340 212 300 Z"
-                        fill={activeMuscle === 'quads' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
-                        stroke="#00f0ff"
-                        strokeWidth="1.6"
-                      />
+                      {/* Quads / Legs (Tapered Leg Columns with Inner Teardrop Quads - Matching Image 1) */}
+                      <g stroke="#00f0ff" strokeWidth="2">
+                        {/* Outer Left Leg Column */}
+                        <path d="M 152 285 L 140 375 L 138 480 C 138 495 160 498 172 498 C 182 498 190 475 192 410 L 196 285 Z" fill="rgba(0, 240, 255, 0.08)" />
+                        {/* Inner Teardrop Left Quad */}
+                        <path
+                          d="M 154 295 C 146 325 144 370 165 388 C 175 382 186 340 188 300 Z"
+                          fill={activeMuscle === 'quads' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.22)'}
+                          stroke="#00f0ff"
+                          strokeWidth="2.2"
+                        />
+
+                        {/* Outer Right Leg Column */}
+                        <path d="M 248 285 L 260 375 L 262 480 C 262 495 240 498 228 498 C 218 498 210 475 208 410 L 204 285 Z" fill="rgba(0, 240, 255, 0.08)" />
+                        {/* Inner Teardrop Right Quad */}
+                        <path
+                          d="M 246 295 C 254 325 256 370 235 388 C 225 382 214 340 212 300 Z"
+                          fill={activeMuscle === 'quads' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.22)'}
+                          stroke="#00f0ff"
+                          strokeWidth="2.2"
+                        />
+                      </g>
                     </>
                   ) : (
                     <>
-                      {/* Trapezius & Latissimus Dorsi Wireframe */}
+                      {/* Back View: Trapezius & Lats */}
                       <path
                         d="M 200 82 L 175 110 L 200 160 L 225 110 Z"
-                        fill={activeMuscle === 'back' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'back' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
                         d="M 145 125 C 170 135 195 150 190 220 C 160 210 135 170 135 145 Z"
-                        fill={activeMuscle === 'back' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'back' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
                         d="M 255 125 C 230 135 205 150 210 220 C 240 210 265 170 265 145 Z"
-                        fill={activeMuscle === 'back' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'back' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
 
-                      {/* Triceps Horseshoe Wireframe */}
+                      {/* Triceps Horseshoe */}
                       <path
                         d="M 115 142 C 105 155 100 185 112 205 C 122 195 128 170 125 150 Z"
-                        fill={activeMuscle === 'triceps' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'triceps' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
                         d="M 285 142 C 295 155 300 185 288 205 C 278 195 272 170 275 150 Z"
-                        fill={activeMuscle === 'triceps' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'triceps' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
 
-                      {/* Hamstrings & Calves Wireframe */}
+                      {/* Hamstrings & Calves */}
                       <path
                         d="M 158 290 C 148 325 145 375 168 395 C 182 390 192 345 195 295 Z"
-                        fill={activeMuscle === 'hamstrings' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'hamstrings' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
                         d="M 242 290 C 252 325 255 375 232 395 C 218 390 208 345 205 295 Z"
-                        fill={activeMuscle === 'hamstrings' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'hamstrings' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
                         d="M 145 420 C 135 440 142 470 162 475 C 175 465 178 440 172 420 Z"
-                        fill={activeMuscle === 'calves' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'calves' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                       <path
                         d="M 255 420 C 265 440 258 470 238 475 C 225 465 222 440 228 420 Z"
-                        fill={activeMuscle === 'calves' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 240, 255, 0.1)'}
+                        fill={activeMuscle === 'calves' ? 'rgba(0, 240, 255, 0.5)' : 'rgba(0, 240, 255, 0.2)'}
+                        stroke="#00f0ff"
+                        strokeWidth="2"
                       />
                     </>
                   )}
-
-                  {/* Legs Outline Wireframe */}
-                  <path d="M 152 285 L 140 370 L 138 480 C 138 495 160 500 170 500 C 180 500 188 475 190 410 L 195 285 Z" strokeWidth="1.5" />
-                  <path d="M 248 285 L 260 370 L 262 480 C 262 495 240 500 230 500 C 220 500 212 475 210 410 L 205 285 Z" strokeWidth="1.5" />
                 </g>
 
-                {/* Laser Pointer Node Pulse Targets */}
-                {currentCalls.map((c) => (
-                  <g key={c.group} onClick={() => handleMuscleClick(c.group)} className="cursor-pointer">
-                    <circle cx={c.cx} cy={c.cy} r="10" fill="#00f0ff" fillOpacity="0.3" filter="url(#cyanGlow)" />
-                    <circle cx={c.cx} cy={c.cy} r="4" fill="#00f0ff" />
-                  </g>
-                ))}
+                {/* Laser Target Nodes & Pointer Lines (Exact Match to Image 1) */}
+                {currentCalls.map((c) => {
+                  const isSelected = activeMuscle === c.group;
+                  return (
+                    <g key={c.group} onClick={() => handleMuscleClick(c.group)} className="cursor-pointer">
+                      {/* Laser Outer Glow Ring */}
+                      <circle
+                        cx={c.cx}
+                        cy={c.cy}
+                        r={isSelected ? 16 : 10}
+                        fill="#00f0ff"
+                        fillOpacity={isSelected ? 0.6 : 0.25}
+                        stroke="#00f0ff"
+                        strokeWidth={isSelected ? 2.5 : 1.5}
+                        filter="url(#neonBlueGlow)"
+                      />
+                      {/* Laser Inner Solid Target Dot */}
+                      <circle cx={c.cx} cy={c.cy} r="4" fill="#00f0ff" />
+
+                      {/* Laser Pointer Line to Callout Box */}
+                      <line
+                        x1={c.cx}
+                        y1={c.cy}
+                        x2={c.pointerSide === 'left' ? 45 : 355}
+                        y2={c.calloutY}
+                        stroke="#00f0ff"
+                        strokeWidth={isSelected ? 2 : 1}
+                        strokeDasharray={isSelected ? 'none' : '3,3'}
+                        strokeOpacity={isSelected ? 1 : 0.5}
+                      />
+                      <circle cx={c.pointerSide === 'left' ? 45 : 355} cy={c.calloutY} r="3" fill="#00f0ff" />
+                    </g>
+                  );
+                })}
               </svg>
             </div>
           </div>
@@ -315,20 +371,20 @@ export const Anatomy360HUD: React.FC = () => {
                     onClick={() => handleMuscleClick(c.group)}
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-cyan-950/90 border-cyan-400 shadow-xl shadow-cyan-500/20 scale-[1.03]'
-                        : 'bg-slate-950/70 border-cyan-500/30 hover:border-cyan-400/60 hover:bg-cyan-950/40'
+                        ? 'bg-cyan-950/90 border-[#00f0ff] shadow-[0_0_20px_rgba(0,240,255,0.3)] scale-[1.03]'
+                        : 'bg-slate-950/80 border-cyan-500/30 hover:border-[#00f0ff]/70 hover:bg-cyan-950/50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-black text-cyan-400 tracking-wider block">
+                      <span className="text-[10px] font-mono font-black text-[#00f0ff] tracking-wider block">
                         {c.splitName}
                       </span>
-                      <Plus className="w-3.5 h-3.5 text-cyan-400" />
+                      <Plus className="w-3.5 h-3.5 text-[#00f0ff]" />
                     </div>
                     <h4 className="text-xs font-black text-white font-mono mt-0.5">{c.label}</h4>
                     <div className="text-[10px] font-mono text-slate-300 mt-1 flex items-center justify-between">
                       <span>Vol: {prog.totalVolumeKg.toLocaleString()} kg</span>
-                      <span className="text-cyan-400 font-extrabold">{prog.levelTitle.split('•')[0]}</span>
+                      <span className="text-[#00f0ff] font-extrabold">{prog.levelTitle.split('•')[0]}</span>
                     </div>
                   </div>
                 );
@@ -338,8 +394,8 @@ export const Anatomy360HUD: React.FC = () => {
       </div>
 
       {/* Bottom Rotation Range Slider */}
-      <div className="flex items-center space-x-4 bg-slate-950/80 p-3 rounded-2xl border border-cyan-500/20 max-w-md mx-auto relative z-10 font-mono">
-        <RotateCw className="w-4 h-4 text-cyan-400 shrink-0" />
+      <div className="flex items-center space-x-4 bg-slate-950/80 p-3 rounded-2xl border border-cyan-500/30 max-w-md mx-auto relative z-10 font-mono">
+        <RotateCw className="w-4 h-4 text-[#00f0ff] shrink-0" />
         <input
           type="range"
           min="0"
@@ -349,9 +405,9 @@ export const Anatomy360HUD: React.FC = () => {
             setIsAutoRotate(false);
             setRotationAngle(parseFloat(e.target.value));
           }}
-          className="w-full accent-cyan-400 cursor-pointer"
+          className="w-full accent-[#00f0ff] cursor-pointer"
         />
-        <span className="text-xs font-extrabold text-cyan-300 w-12 text-right">{Math.round(rotationAngle)}°</span>
+        <span className="text-xs font-extrabold text-[#00f0ff] w-12 text-right">{Math.round(rotationAngle)}°</span>
       </div>
 
       {/* Quick Set Logger Modal */}
